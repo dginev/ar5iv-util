@@ -42,7 +42,7 @@ fn fish_out_version(client: &Client, arxiv_id: &str) -> usize {
   while retry_check_url(client, &export_arxiv_url) {
     version_try += 1;
     export_arxiv_url = format!("https://export.arxiv.org/abs/{}v{}", arxiv_id, version_try);
-    thread::sleep(Duration::from_millis(500));
+    thread::sleep(Duration::from_secs(1));
   }
   version_try - 1
 }
@@ -61,7 +61,9 @@ fn retry_check_url(client: &Client, url: &str) -> bool {
         other => eprintln!("-- no handler for http code {}.", other)
       },
       Err(e) => {
-        panic!("Failed to connect, aborting. Reason: {:?}", e);
+        if e.is_connect() {
+          panic!("Failed to connect, aborting. Reason: {:?}", e);
+        }
       }
     }
   }
