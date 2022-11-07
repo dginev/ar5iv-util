@@ -14,7 +14,7 @@ pub fn check_ids_http(
 ) -> Result<(), Box<dyn Error>> {
   let destination_path = Path::new(destination_filepath);
   let mut dest_file = if destination_path.exists() {
-    File::options().write(true).open(destination_path)?
+    File::options().write(true).append(true).open(destination_path)?
   } else {
     File::create(destination_path)?
   };
