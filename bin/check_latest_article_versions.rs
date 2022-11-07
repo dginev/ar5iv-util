@@ -13,6 +13,9 @@ fn main() -> Result<(), Box<dyn Error>> {
   create_list_of_ids(CORPUS_ROOT_PATH, UNCHECKED_IDS_FILEPATH)?;
   eprintln!("-- filtering out ids that were already checked");
   let task_ids = filter_list_to_check(UNCHECKED_IDS_FILEPATH, CHECKED_IDS_FILEPATH)?;
-  eprintln!("-- polling export.arxiv.org to check the latest versions of {} article ids.", task_ids.len());
+  eprintln!(
+    "-- polling export.arxiv.org to check the latest versions of {} article ids.",
+    task_ids.len()
+  );
   check_ids_http(task_ids, CHECKED_IDS_FILEPATH)
 }
