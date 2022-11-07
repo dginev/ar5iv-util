@@ -58,7 +58,7 @@ pub fn filter_list_to_check(
     let reader = BufReader::new(checked_file);
     let mut set = HashSet::new();
     for line in reader.lines().flatten() {
-      set.insert(line);
+      set.insert(dbg!(line));
     }
     set
   };
@@ -69,7 +69,7 @@ pub fn filter_list_to_check(
   let list_to_check = reader
     .lines()
     .map(|line| line.unwrap_or_default())
-    .filter(|line| !line.is_empty() && !checked_set.contains(line))
+    .filter(|unchecked_line| !unchecked_line.is_empty() && !checked_set.contains(dbg!(unchecked_line)))
     .collect();
   Ok(list_to_check)
 }
