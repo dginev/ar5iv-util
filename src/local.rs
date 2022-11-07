@@ -22,7 +22,8 @@ pub fn create_list_of_ids(root_path: &str, unchecked_filepath: &str) -> Result<(
 
   let mut unchecked_file = File::create(unchecked_filepath)?;
 
-  for entry in WalkDir::new(dbg!(root_path))
+  for entry in WalkDir::new(root_path)
+    .follow_links(true)
     .sort(true)
     .max_depth(2)
     .min_depth(2)
