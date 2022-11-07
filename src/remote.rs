@@ -30,7 +30,7 @@ pub fn check_ids_http(
     for (id, version) in ids_with_versions {
       writeln!(dest_file, "{},{}", id, version)?;
     }
-    thread::sleep(Duration::from_millis(200));
+    thread::sleep(Duration::from_secs(1));
   }
   Ok(())
 }
