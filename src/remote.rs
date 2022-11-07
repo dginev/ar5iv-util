@@ -51,13 +51,16 @@ fn fish_out_version(client: &Client, arxiv_id: &str) -> usize {
 // then version N exists. 404 (or other), we assume it doesn't.
 fn retry_check_url(client: &Client, url: &str) -> bool {
   for _retries in 0..3 {
-    if let Ok(resp) = client.head(url).send() {
-      match resp.status().as_u16() {
+    match client.head(url).send() {
+      Ok(resp) => match resp.status().as_u16() {
         200 => return true,
         403 => panic!("This scraper has been forbidden from accessing export.arxiv.org, please contact an arXiv admin."),
         400 | 404 => return false,
         503 | 500 => thread::sleep(Duration::from_secs(10)),
         other => eprintln!("-- no handler for http code {}.", other)
+      },
+      Err(e) => {
+        panic!("Failed to connect, aborting. Reason: {:?}", e);
       }
     }
   }
