@@ -42,6 +42,7 @@ fn fish_out_version(client: &Client, arxiv_id: &str) -> usize {
   while retry_check_url(client, &export_arxiv_url) {
     version_try += 1;
     export_arxiv_url = format!("https://export.arxiv.org/abs/{}v{}", arxiv_id, version_try);
+    thread::sleep(Duration::from_millis(500));
   }
   version_try - 1
 }
