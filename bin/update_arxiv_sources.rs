@@ -64,13 +64,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     let _downloaded_results: Vec<_> = batch.par_iter().map(|(id, client)| {
       // the URL we download from
       let url = format!("https://export.arxiv.org/e-print/{}", id);
+      let mut update_ok = false;
       for _retry in 0..3 {
         if let Ok(payload) = client.get(&url).send() {
           if payload.status() == 200 {
             if let Ok(bytes) = payload.bytes() {
               // only execute if we get some bytes
               if !bytes.is_empty() {
-                let (to_dir,base_name) = if let Some(cap) = slash_regex.captures(&id) {
+                let (to_dir,base_name) = if let Some(cap) = slash_regex.captures(id) {
                   let base = cap.get(1).unwrap().as_str();
                   let id = cap.get(2).unwrap().as_str();
                   let mmyy = &id[..4];
@@ -82,11 +83,15 @@ fn main() -> Result<(), Box<dyn Error>> {
                   id.to_owned())
                 };
                 repackage_arxiv_download(&mut bytes.to_vec(), to_dir, base_name);
+                update_ok = true;
               }
             }
             break;
           }
         }
+      }
+      if !update_ok {
+        panic!("Failed to update {}; debug request: {:}", url, client.get(&url).send().unwrap().status());
       }
     }).collect();
     updated += batch.len();
