@@ -81,7 +81,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                   (format!("{}/{}/{}", CORPUS_ROOT_PATH, mmyy, id),
                   id.to_owned())
                 };
-                eprintln!("{} bytes from {}; to {}", bytes.len(), url, to_dir);
                 repackage_arxiv_download(&mut bytes.to_vec(), to_dir, base_name);
               }
             }
@@ -93,6 +92,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     updated += batch.len();
     if updated % 100 == 0 {
       eprintln!("-- updated {} articles in {} sec...", updated, (Instant::now()-start_time).as_secs());
+      dbg!(&batch);
     }
     // save in resume after the full batch finishes to avoid data races.
     for (id, _) in batch {
