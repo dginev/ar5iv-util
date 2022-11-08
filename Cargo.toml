@@ -7,9 +7,14 @@ edition = "2021"
 name = "check_latest_article_versions"
 path = "bin/check_latest_article_versions.rs"
 
+[[bin]]
+name = "latest_versions_from_snapshot"
+path = "bin/latest_versions_from_snapshot.rs"
+
 [dependencies]
 rayon="1.5"
 jwalk="0.6.0"
 reqwest = { version = "0.11", features = ["blocking"] }
 lazy_static = "1.4"
 regex = "1.7"
+serde_json = "1.0.87"
