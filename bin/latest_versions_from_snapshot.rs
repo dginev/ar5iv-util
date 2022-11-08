@@ -1,10 +1,10 @@
 use serde_json::{Deserializer, Value};
+use std::collections::HashMap;
+use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
-use std::error::Error;
 use std::io::BufReader;
 use std::path::Path;
-use std::collections::HashMap;
 
 fn main() -> Result<(), Box<dyn Error>> {
   // JSON obtained from:
@@ -13,8 +13,8 @@ fn main() -> Result<(), Box<dyn Error>> {
   let snapshot_file = File::open(snapshot_path)?;
   let reader = BufReader::new(snapshot_file);
   let stream = Deserializer::from_reader(reader).into_iter::<Value>();
-
-  let mut gather_file = File::create("multi_version_ids.json").unwrap();
+  // gather a simple list, one id per line
+  let mut gather_file = File::create("multi_version_ids.txt").unwrap();
   let mut gather_stats = HashMap::new();
   let mut total_gathered = 0;
 
@@ -22,18 +22,25 @@ fn main() -> Result<(), Box<dyn Error>> {
     let value = value_result.unwrap();
     let version_count = value.get("versions").unwrap().as_array().unwrap().len();
     let stat_entry = gather_stats.entry(version_count).or_insert(0);
-    *stat_entry +=1;
+    *stat_entry += 1;
 
     if version_count > 1 {
-      total_gathered+=1;
+      total_gathered += 1;
       let value_str = value.get("id").unwrap().as_str().unwrap();
       writeln!(gather_file, "{}", value_str)?;
     }
   }
   let mut stats_file = File::create("version_stats.json").unwrap();
-  writeln!(stats_file, "{}", serde_json::to_string(&gather_stats).unwrap())?;
+  writeln!(
+    stats_file,
+    "{}",
+    serde_json::to_string(&gather_stats).unwrap()
+  )?;
 
-  eprintln!("-- gathered {} aritcle ids with version 2 or up.", total_gathered);
+  eprintln!(
+    "-- gathered {} aritcle ids with version 2 or up.",
+    total_gathered
+  );
 
   Ok(())
 }

@@ -11,6 +11,14 @@ path = "bin/check_latest_article_versions.rs"
 name = "latest_versions_from_snapshot"
 path = "bin/latest_versions_from_snapshot.rs"
 
+[[bin]]
+name = "update_arxiv_sources"
+path = "bin/update_arxiv_sources.rs"
+
+
+[dependencies.libarchive-sys]
+git = "https://github.com/dginev/libarchive-sys.git"
+
 [dependencies]
 rayon="1.5"
 jwalk="0.6.0"
