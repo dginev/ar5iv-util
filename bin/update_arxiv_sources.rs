@@ -6,7 +6,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
-use std::thread;
+// use std::thread;
 use std::time::{Instant, Duration};
 use std::path::Path;
 
@@ -61,7 +61,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         batch.push((nid, this_client));
       }
     }
-    let _downloaded_results: Vec<_> = batch.par_iter().map(|(id, client)| {
+    let downloaded_ok: Vec<bool> = batch.par_iter().map(|(id, client)| {
       // the URL we download from
       let url = format!("https://export.arxiv.org/e-print/{}", id);
       let mut update_ok = false;
@@ -91,8 +91,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
       }
       if !update_ok {
-        panic!("Failed to update {}; debug request: {:}", url, client.get(&url).send().unwrap().status());
+        eprintln!("Failed to update {}; debug request: {:}", url, client.get(&url).send().unwrap().status());
       }
+      update_ok
     }).collect();
     updated += batch.len();
     if updated % 100 == 0 {
@@ -100,11 +101,15 @@ fn main() -> Result<(), Box<dyn Error>> {
       dbg!(&batch);
     }
     // save in resume after the full batch finishes to avoid data races.
-    for (id, _) in batch {
-      writeln!(resume_file, "{}", id)?;
+    // *except* if issues were encountered, in which case we may want to revisit later...
+    // see for example the author-requested 403 here: https://export.arxiv.org/e-print/math/0607467
+    if downloaded_ok.into_iter().all(|a| a) {
+      for (id, _) in batch {
+        writeln!(resume_file, "{}", id)?;
+      }
     }
     // courtesy sleep for reducing the load on arXiv's infra.
-    thread::sleep(Duration::from_secs(1));
+    // thread::sleep(Duration::from_secs(1));
   }
   eprintln!("-- Done: updated {} articles in {} sec.", updated, (Instant::now()-start_time).as_secs());
   Ok(())
