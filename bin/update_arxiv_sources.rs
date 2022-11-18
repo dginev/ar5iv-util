@@ -22,6 +22,7 @@ const RESUME_LOG_FILEPATH : &str = "already_updated.log";
 
 fn main() -> Result<(), Box<dyn Error>> {
   let start_time = Instant::now();
+  let retry_indexes: [i32;3] = [0,1,2];
   let mut args = env::args();
   let _ = args.next();
   let ids_to_update_path = args
@@ -51,7 +52,7 @@ fn main() -> Result<(), Box<dyn Error>> {
   // reuse a group of download Clients
   let clients : Vec<Client> = (0..NUM_THREADS).map(|_| reqwest::blocking::Client::builder()
     .user_agent("ar5iv (https://ar5iv.labs.arxiv.org)")
-    .timeout(Duration::from_secs(60))
+    .timeout(Duration::from_secs(120))
     .build().unwrap()).collect();
   let mut updated = 0;
   while let Some(batch_id) = ids_to_update.next() {
@@ -61,53 +62,54 @@ fn main() -> Result<(), Box<dyn Error>> {
         batch.push((nid, this_client));
       }
     }
-    let downloaded_ok: Vec<bool> = batch.par_iter().map(|(id, client)| {
+    let _downloaded_ok: Vec<bool> = batch.par_iter().map(|(id, client)| {
       // the URL we download from
       let url = format!("https://export.arxiv.org/e-print/{}", id);
-      let mut update_ok = false;
-      for _retry in 0..3 {
+      'retries: for _retry in &retry_indexes {
         if let Ok(payload) = client.get(&url).send() {
-          if payload.status() == 200 {
-            if let Ok(bytes) = payload.bytes() {
-              // only execute if we get some bytes
-              if !bytes.is_empty() {
-                let (to_dir,base_name) = if let Some(cap) = slash_regex.captures(id) {
-                  let base = cap.get(1).unwrap().as_str();
-                  let id = cap.get(2).unwrap().as_str();
-                  let mmyy = &id[..4];
-                  (format!("{}/{}/{}{}", CORPUS_ROOT_PATH, mmyy, base, id),
-                  format!("{}{}",base, id))
-                } else {
-                  let mmyy = &id[..4];
-                  (format!("{}/{}/{}", CORPUS_ROOT_PATH, mmyy, id),
-                  id.to_owned())
-                };
-                repackage_arxiv_download(&mut bytes.to_vec(), to_dir, base_name);
-                update_ok = true;
+          match payload.status().as_u16() {
+            200 => {
+              if let Ok(bytes) = payload.bytes() {
+                // only execute if we get some bytes
+                if !bytes.is_empty() {
+                  let (to_dir,base_name) = if let Some(cap) = slash_regex.captures(id) {
+                    let base = cap.get(1).unwrap().as_str();
+                    let id = cap.get(2).unwrap().as_str();
+                    let mmyy = &id[..4];
+                    (format!("{}/{}/{}{}", CORPUS_ROOT_PATH, mmyy, base, id),
+                    format!("{}{}",base, id))
+                  } else {
+                    let mmyy = &id[..4];
+                    (format!("{}/{}/{}", CORPUS_ROOT_PATH, mmyy, id),
+                    id.to_owned())
+                  };
+                  repackage_arxiv_download(&mut bytes.to_vec(), to_dir, base_name);
+                }
               }
-            }
-            break;
+              break 'retries;
+            },
+            403 => {eprintln!("code 403 for article id {}, skip.", id); break 'retries;},
+            other => eprintln!("code {} for article id {}.", other, id),
           }
         }
       }
-      if !update_ok {
-        eprintln!("Failed to update {}; debug request: {:}", url, client.get(&url).send().unwrap().status());
-      }
-      update_ok
+      true
     }).collect();
     updated += batch.len();
     if updated % 100 == 0 {
       eprintln!("-- updated {} articles in {} sec...", updated, (Instant::now()-start_time).as_secs());
       dbg!(&batch);
     }
-    // save in resume after the full batch finishes to avoid data races.
-    // *except* if issues were encountered, in which case we may want to revisit later...
-    // see for example the author-requested 403 here: https://export.arxiv.org/e-print/math/0607467
-    if downloaded_ok.into_iter().all(|a| a) {
-      for (id, _) in batch {
-        writeln!(resume_file, "{}", id)?;
-      }
+    // Update: if we get a 403, it is almost always per author's request
+    // so skip them as done.
+    // // save in resume after the full batch finishes to avoid data races.
+    // // *except* if issues were encountered, in which case we may want to revisit later...
+    // // see for example the author-requested 403 here: https://export.arxiv.org/e-print/math/0607467
+    // if downloaded_ok.into_iter().all(|a| a) {
+    for (id, _) in batch {
+      writeln!(resume_file, "{}", id)?;
     }
+    // }
     // courtesy sleep for reducing the load on arXiv's infra.
     // thread::sleep(Duration::from_secs(1));
   }
