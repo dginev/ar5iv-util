@@ -6,13 +6,11 @@ use libxml::parser::Parser;
 
 pub fn fetch_article_list_since(yyyymmdd: &str) -> Result<Vec<String>, Box<dyn Error>> {
   assert!(
-    yyyymmdd.split("-").count() == 3,
+    yyyymmdd.split('-').count() == 3,
     "expecting a date string in the format YYYY-MM-DD"
   );
   let oai_arxiv_url = format!(
-    "http://export.arxiv.org/oai2?verb=ListIdentifiers&metadataPrefix=oai_dc&from={}",
-    yyyymmdd
-  );
+    "http://export.arxiv.org/oai2?verb=ListIdentifiers&metadataPrefix=oai_dc&from={yyyymmdd}");
   fetch_article_list_by_url(oai_arxiv_url)
 }
 
@@ -66,8 +64,6 @@ pub fn fetch_article_list_by_url(url: String) -> Result<Vec<String>, Box<dyn Err
 
 pub fn fetch_article_list_resume(token: &str) -> Result<Vec<String>, Box<dyn Error>> {
   let oai_arxiv_resume_url = format!(
-    "http://export.arxiv.org/oai2?verb=ListIdentifiers&resumptionToken={}",
-    token
-  );
+    "http://export.arxiv.org/oai2?verb=ListIdentifiers&resumptionToken={token}");
   fetch_article_list_by_url(oai_arxiv_resume_url)
 }

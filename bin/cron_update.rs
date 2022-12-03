@@ -30,11 +30,11 @@ pub fn main() -> Result<(), Box<dyn Error>> {
   eprintln!("oai listed {} entries to update.", article_list.len());
   article_list.sort();
   // 1.1 save in log/ for today.
-  let oai_today_log_path_str = format!("./log/oai_ids_upto_{}.log", today);
+  let oai_today_log_path_str = format!("./log/oai_ids_upto_{today}.log");
   let oai_today_log_path = Path::new(&oai_today_log_path_str);
   let mut oai_log_file = File::create(oai_today_log_path)?;
   for article_id in article_list.into_iter() {
-    writeln!(oai_log_file, "{}", article_id)?;
+    writeln!(oai_log_file, "{article_id}")?;
   }
 
   // Step 2. Fetch the sources of all articles that need update.

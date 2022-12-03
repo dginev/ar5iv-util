@@ -64,7 +64,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     let _downloaded_ok: Vec<bool> = batch.par_iter().map(|(id, client)| {
       // the URL we download from
-      let url = format!("https://export.arxiv.org/e-print/{}", id);
+      let url = format!("https://export.arxiv.org/e-print/{id}");
       'retries: for _retry in &retry_indexes {
         if let Ok(payload) = client.get(&url).send() {
           match payload.status().as_u16() {
@@ -76,11 +76,11 @@ fn main() -> Result<(), Box<dyn Error>> {
                     let base = cap.get(1).unwrap().as_str();
                     let id = cap.get(2).unwrap().as_str();
                     let mmyy = &id[..4];
-                    (format!("{}/{}/{}{}", CORPUS_ROOT_PATH, mmyy, base, id),
-                    format!("{}{}",base, id))
+                    (format!("{CORPUS_ROOT_PATH}/{mmyy}/{base}{id}"),
+                    format!("{base}{id}"))
                   } else {
                     let mmyy = &id[..4];
-                    (format!("{}/{}/{}", CORPUS_ROOT_PATH, mmyy, id),
+                    (format!("{CORPUS_ROOT_PATH}/{mmyy}/{id}"),
                     id.to_owned())
                   };
                   repackage_arxiv_download(&mut bytes.to_vec(), to_dir, base_name);
@@ -88,8 +88,8 @@ fn main() -> Result<(), Box<dyn Error>> {
               }
               break 'retries;
             },
-            403 => {eprintln!("code 403 for article id {}, skip.", id); break 'retries;},
-            other => eprintln!("code {} for article id {}.", other, id),
+            403 => {eprintln!("code 403 for article id {id}, skip."); break 'retries;},
+            other => eprintln!("code {other} for article id {id}."),
           }
         }
       }
@@ -107,7 +107,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // // see for example the author-requested 403 here: https://export.arxiv.org/e-print/math/0607467
     // if downloaded_ok.into_iter().all(|a| a) {
     for (id, _) in batch {
-      writeln!(resume_file, "{}", id)?;
+      writeln!(resume_file, "{id}")?;
     }
     // }
     // courtesy sleep for reducing the load on arXiv's infra.

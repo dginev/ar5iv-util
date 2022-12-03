@@ -31,7 +31,7 @@ pub fn check_ids_http(
       .map(|id| (id, fish_out_article_version(&client, id)))
       .collect();
     for (id, version) in ids_with_versions {
-      writeln!(dest_file, "{},{}", id, version)?;
+      writeln!(dest_file, "{id},{version}")?;
     }
     thread::sleep(Duration::from_secs(1));
   }
@@ -41,10 +41,10 @@ pub fn check_ids_http(
 fn fish_out_article_version(client: &Client, arxiv_id: &str) -> usize {
   // try incrementing until we get a 404 for a version (also, we know v1 exists)
   let mut version_try = 2;
-  let mut export_arxiv_url = format!("https://export.arxiv.org/abs/{}v{}", arxiv_id, version_try);
+  let mut export_arxiv_url = format!("https://export.arxiv.org/abs/{arxiv_id}v{version_try}");
   while retry_check_url(client, &export_arxiv_url) {
     version_try += 1;
-    export_arxiv_url = format!("https://export.arxiv.org/abs/{}v{}", arxiv_id, version_try);
+    export_arxiv_url = format!("https://export.arxiv.org/abs/{arxiv_id}v{version_try}");
     thread::sleep(Duration::from_secs(1));
   }
   version_try - 1
@@ -61,11 +61,11 @@ fn retry_check_url(client: &Client, url: &str) -> bool {
         403 => panic!("This scraper has been forbidden from accessing export.arxiv.org, please contact an arXiv admin."),
         400 | 404 => return false,
         503 | 500 => thread::sleep(Duration::from_secs(10)),
-        other => eprintln!("-- no handler for http code {}.", other)
+        other => eprintln!("-- no handler for http code {other}.")
       },
       Err(e) => {
         if e.is_connect() {
-          panic!("Failed to connect, aborting. Reason: {:?}", e);
+          panic!("Failed to connect, aborting. Reason: {e:?}");
         }
       }
     }

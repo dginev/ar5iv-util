@@ -46,7 +46,7 @@ pub fn create_list_of_ids(root_path: &str, unchecked_filepath: &str) -> Result<(
         cap.get(2).unwrap().as_str()
       )?;
     } else {
-      writeln!(unchecked_file, "{}", id)?;
+      writeln!(unchecked_file, "{id}")?;
     }
   }
   Ok(())
@@ -100,7 +100,7 @@ pub fn repackage_arxiv_download(memory: &mut [u8], to_dir: String, base_name: St
     //.add_filter(ArchiveFilter::Lzip)
     // .set_compression(ArchiveFilter::None)
     .set_format(ArchiveFormat::Zip);
-  let to_path = format!("{}/{}.zip", to_dir, base_name);
+  let to_path = format!("{to_dir}/{base_name}.zip");
   archive_writer_new
     .open_filename(&to_path)
     .unwrap();
@@ -120,7 +120,7 @@ pub fn repackage_arxiv_download(memory: &mut [u8], to_dir: String, base_name: St
         file_count += 1;
         match archive_writer_new.write_header(e) {
           Ok(_) => {}, // TODO: If we need to print an error message, we can do so later.
-          Err(e2) => println!("Header write failed: {:?}", e2),
+          Err(e2) => println!("Header write failed: {e2:?}"),
         };
         while let Ok(chunk) = archive_reader.read_data(BUFFER_SIZE) {
           archive_writer_new.write_data(chunk).unwrap();
@@ -144,9 +144,9 @@ pub fn repackage_arxiv_download(memory: &mut [u8], to_dir: String, base_name: St
         Ok(_) => {
           single_file_transfer(&default_tex_target, &raw_reader, &mut archive_writer_new);
         },
-        Err(_) => println!("No content in archive: {:?}", to_dir),
+        Err(_) => println!("No content in archive: {to_dir:?}"),
       },
-      Err(_) => println!("Unrecognizeable archive: {:?}", to_dir),
+      Err(_) => println!("Unrecognizeable archive: {to_dir:?}"),
     }
   }
 }
@@ -167,13 +167,13 @@ pub fn single_file_transfer(tex_target: &str, reader: &Reader, writer: &mut Writ
       ok_header = true;
     },
     Err(e) => {
-      println!("Couldn't write header: {:?}", e);
+      println!("Couldn't write header: {e:?}");
     },
   }
   if ok_header {
     match writer.write_data(raw_data) {
       Ok(_) => {},
-      Err(e) => println!("Failed to write data to {:?} because {:?}", tex_target, e),
+      Err(e) => println!("Failed to write data to {tex_target:?} because {e:?}"),
     };
   }
 }

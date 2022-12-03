@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     if version_count > 1 {
       total_gathered += 1;
       let value_str = value.get("id").unwrap().as_str().unwrap();
-      writeln!(gather_file, "{}", value_str)?;
+      writeln!(gather_file, "{value_str}")?;
     }
   }
   let mut stats_file = File::create("version_stats.json").unwrap();
@@ -38,9 +38,7 @@ fn main() -> Result<(), Box<dyn Error>> {
   )?;
 
   eprintln!(
-    "-- gathered {} aritcle ids with version 2 or up.",
-    total_gathered
-  );
+    "-- gathered {total_gathered} aritcle ids with version 2 or up.");
 
   Ok(())
 }
