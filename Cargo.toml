@@ -15,6 +15,9 @@ path = "bin/latest_versions_from_snapshot.rs"
 name = "update_arxiv_sources"
 path = "bin/update_arxiv_sources.rs"
 
+[[bin]]
+name = "cron_update"
+path = "bin/cron_update.rs"
 
 [dependencies.libarchive-sys]
 git = "https://github.com/dginev/libarchive-sys.git"
@@ -26,3 +29,4 @@ reqwest = { version = "0.11", features = ["blocking"] }
 lazy_static = "1.4"
 regex = "1.7"
 serde_json = "1.0.87"
+libxml = "0.3.1"

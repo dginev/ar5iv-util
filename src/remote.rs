@@ -28,7 +28,7 @@ pub fn check_ids_http(
   for arxiv_id_batch in task_ids.chunks(4) {
     let ids_with_versions: Vec<_> = arxiv_id_batch
       .par_iter()
-      .map(|id| (id, fish_out_version(&client, id)))
+      .map(|id| (id, fish_out_article_version(&client, id)))
       .collect();
     for (id, version) in ids_with_versions {
       writeln!(dest_file, "{},{}", id, version)?;
@@ -38,7 +38,7 @@ pub fn check_ids_http(
   Ok(())
 }
 
-fn fish_out_version(client: &Client, arxiv_id: &str) -> usize {
+fn fish_out_article_version(client: &Client, arxiv_id: &str) -> usize {
   // try incrementing until we get a 404 for a version (also, we know v1 exists)
   let mut version_try = 2;
   let mut export_arxiv_url = format!("https://export.arxiv.org/abs/{}v{}", arxiv_id, version_try);
@@ -72,56 +72,3 @@ fn retry_check_url(client: &Client, url: &str) -> bool {
   }
   false
 }
-
-// fn _oai_main() -> Result<(), Box<dyn std::error::Error>> {
-//   let parser = Parser::default();
-//   let client = reqwest::blocking::Client::new();
-//   for arxiv_id in &[
-//     "2203.11882",
-//     "hep-ph/0702032",
-//     "2203.11882",
-//     "hep-ph/0702032",
-//     "2203.11882",
-//     "hep-ph/0702032",
-//     "2203.11882",
-//     "hep-ph/0702032",
-//   ] {
-//     let oai_arxivraw_url = format!("http://export.arxiv.org/oai2?verb=GetRecord&identifier=oai:arXiv.org:{}&metadataPrefix=arXivRaw",arxiv_id);
-//     for _retries in 0..3 {
-//       if let Ok(resp) = client.get(&oai_arxivraw_url).send() {
-//         let status = resp.status();
-//         if status != 200 {
-//           if status == 503 {
-//             thread::sleep(Duration::from_secs(10));
-//           }
-//         } else {
-//           let payload = resp.text()?;
-//           if !payload.is_empty() {
-//             if let Ok(doc) = parser.parse_string(payload) {
-//               if let Some(root) = doc.get_root_readonly() {
-//                 let mut max_version = 1;
-//                 for version_node in root
-//                   .findnodes("//*[local-name()='version']", &doc)
-//                   .unwrap_or_default()
-//                 {
-//                   if let Some(mut version_value) = version_node.get_attribute("version") {
-//                     if version_value.starts_with('v') {
-//                       version_value.remove(0);
-//                     }
-//                     let version_u8 = version_value.parse::<u8>().unwrap_or(1);
-//                     if version_u8 > max_version {
-//                       max_version = version_u8;
-//                     }
-//                   }
-//                 }
-//                 dbg!((arxiv_id, max_version));
-//                 break; // no need to retry further.
-//               }
-//             }
-//           }
-//         }
-//       }
-//     }
-//   }
-// Ok(())
-// }

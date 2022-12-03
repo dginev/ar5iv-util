@@ -1,0 +1,1 @@
+The `log/` directory contains receipts from each oai-based update run.
