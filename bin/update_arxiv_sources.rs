@@ -1,5 +1,4 @@
 #![feature(iter_array_chunks)]
-#![feature(array_zip)]
 use std::collections::HashSet;
 use std::env;
 use std::error::Error;
