@@ -1,10 +1,16 @@
 use serde_json::{Deserializer, Value};
-use std::collections::HashMap;
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::Path;
+use chrono::{DateTime, TimeZone, FixedOffset};
+use once_cell::sync::Lazy;
+
+// When was the last date a full update was ran?
+pub static LAST_UPDATE : Lazy<DateTime<FixedOffset>> = Lazy::new(||
+  FixedOffset::east_opt(0).unwrap().with_ymd_and_hms(2022, 11, 1, 0, 0, 0).unwrap()
+);
 
 fn main() -> Result<(), Box<dyn Error>> {
   // JSON obtained from:
@@ -14,28 +20,26 @@ fn main() -> Result<(), Box<dyn Error>> {
   let reader = BufReader::new(snapshot_file);
   let stream = Deserializer::from_reader(reader).into_iter::<Value>();
   // gather a simple list, one id per line
-  let mut gather_file = File::create("multi_version_ids.txt").unwrap();
-  let mut gather_stats = HashMap::new();
+  let mut gather_file = File::create("multi_version_ids.txt")?;
   let mut total_gathered = 0;
 
   for value_result in stream {
-    let value = value_result.unwrap();
-    let version_count = value.get("versions").unwrap().as_array().unwrap().len();
-    let stat_entry = gather_stats.entry(version_count).or_insert(0);
-    *stat_entry += 1;
-
-    if version_count > 1 {
-      total_gathered += 1;
-      let value_str = value.get("id").unwrap().as_str().unwrap();
-      writeln!(gather_file, "{value_str}")?;
+    let value = value_result?;
+    let versions = value.get("versions").unwrap().as_array().unwrap();
+    for val in versions {
+      let created : DateTime<FixedOffset> = DateTime::parse_from_rfc2822(
+      val.get("created").unwrap().as_str().unwrap())?;
+      if *LAST_UPDATE < created {
+        let v = val.get("version").unwrap().as_str().unwrap();
+        if v != "v1" { // we have v1 from the S3 bucket downloads
+          total_gathered += 1;
+          let value_str = value.get("id").unwrap().as_str().unwrap();
+          writeln!(gather_file, "{value_str}")?;
+          break;
+        }
+      }
     }
   }
-  let mut stats_file = File::create("version_stats.json").unwrap();
-  writeln!(
-    stats_file,
-    "{}",
-    serde_json::to_string(&gather_stats).unwrap()
-  )?;
 
   eprintln!(
     "-- gathered {total_gathered} aritcle ids with version 2 or up.");
