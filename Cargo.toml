@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "check_latest_article_versions"
-path = "bin/check_latest_article_versions.rs"
+name = "create_list_of_local_ids"
+path = "bin/create_list_of_local_ids.rs"
 
 [[bin]]
 name = "latest_versions_from_snapshot"
