@@ -13,7 +13,7 @@ use regex::Regex;
 use reqwest::blocking::Client;
 use rayon::prelude::*;
 
-use ar5iv_util::local::{CORPUS_ROOT_PATH, IDS_TO_UPDATE_FILEPATH, UNCHECKED_IDS_FILEPATH};
+use ar5iv_util::local::{CORPUS_ROOT_PATH, IDS_TO_UPDATE_FILEPATH};//UNCHECKED_IDS_FILEPATH
 use ar5iv_util::local::repackage_arxiv_download;
 
 const NUM_THREADS : usize = 4;
@@ -27,14 +27,14 @@ fn main() -> Result<(), Box<dyn Error>> {
   let ids_to_update_path = args
     .next()
     .unwrap_or_else(|| String::from(IDS_TO_UPDATE_FILEPATH));
-  let unchecked_ids_path = args
-    .next()
-    .unwrap_or_else(|| String::from(UNCHECKED_IDS_FILEPATH));
+  // let unchecked_ids_path = args
+  //   .next()
+  //   .unwrap_or_else(|| String::from(UNCHECKED_IDS_FILEPATH));
 
   // load the Set of ids to update.
   let all_ids_to_update = build_set(&ids_to_update_path);
   // load the Set of local ids we have available
-  let all_local_ids = build_set(&unchecked_ids_path);
+  // let all_local_ids = build_set(&unchecked_ids_path);
   // load the Set of already covered ids
   let already_updated = build_set(RESUME_LOG_FILEPATH);
   // save newly updated files to allow easy resume.
@@ -44,7 +44,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     File::create(RESUME_LOG_FILEPATH)?
   };
   // cover the intersection
-  let mut ids_to_update = all_ids_to_update.into_iter().filter(|e| all_local_ids.contains(e) && !already_updated.contains(e));
+  // let mut ids_to_update = all_ids_to_update.into_iter().filter(|e| all_local_ids.contains(e) && !already_updated.contains(e));
+  // recovery for 2308, also download fresh entries:
+  let mut ids_to_update = all_ids_to_update.into_iter()
+    .filter(|e| !already_updated.contains(e));
 
   let slash_regex = Regex::new("^([^/]+)/([^/]+)$").unwrap();
 

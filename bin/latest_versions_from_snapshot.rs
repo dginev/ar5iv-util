@@ -9,7 +9,7 @@ use once_cell::sync::Lazy;
 
 // When was the last date a full update was ran?
 pub static LAST_UPDATE : Lazy<DateTime<FixedOffset>> = Lazy::new(||
-  FixedOffset::east_opt(0).unwrap().with_ymd_and_hms(2022, 11, 1, 0, 0, 0).unwrap()
+  FixedOffset::east_opt(0).unwrap().with_ymd_and_hms(2023, 7, 31, 0, 0, 0).unwrap()
 );
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -30,13 +30,13 @@ fn main() -> Result<(), Box<dyn Error>> {
       let created : DateTime<FixedOffset> = DateTime::parse_from_rfc2822(
       val.get("created").unwrap().as_str().unwrap())?;
       if *LAST_UPDATE < created {
-        let v = val.get("version").unwrap().as_str().unwrap();
-        if v != "v1" { // we have v1 from the S3 bucket downloads
+        // let v = val.get("version").unwrap().as_str().unwrap();
+        // if v != "v1" { // we have v1 from the S3 bucket downloads
           total_gathered += 1;
           let value_str = value.get("id").unwrap().as_str().unwrap();
           writeln!(gather_file, "{value_str}")?;
           break;
-        }
+        // }
       }
     }
   }
