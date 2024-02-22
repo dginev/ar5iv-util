@@ -39,7 +39,7 @@ fn main() -> Result<(), Box<dyn Error>> {
   let already_updated = build_set(RESUME_LOG_FILEPATH);
   // save newly updated files to allow easy resume.
   let mut resume_file = if Path::new(RESUME_LOG_FILEPATH).exists() {
-    File::options().write(true).append(true).open(RESUME_LOG_FILEPATH)?
+    File::options().append(true).open(RESUME_LOG_FILEPATH)?
   } else {
     File::create(RESUME_LOG_FILEPATH)?
   };
@@ -66,9 +66,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     let _downloaded_ok: Vec<bool> = batch.par_iter().map(|(id, client)| {
       // the URL we download from
-      let url = format!("https://export.arxiv.org/e-print/{id}");
+      let url_owned = format!("https://export.arxiv.org/e-print/{id}");
+      let url = &url_owned;
       'retries: for _retry in &retry_indexes {
-        if let Ok(payload) = client.get(&url).send() {
+        if let Ok(payload) = client.get(url).send() {
           match payload.status().as_u16() {
             200 => {
               if let Ok(bytes) = payload.bytes() {
@@ -123,7 +124,7 @@ fn build_set(path: &str) -> HashSet<String> {
   if let Ok(file) = File::open(path) {
     let reader = BufReader::new(file);
     let mut set = HashSet::new();
-    for line in reader.lines().flatten() {
+    for line in reader.lines().map_while(Result::ok) {
       set.insert(line);
     }
     set

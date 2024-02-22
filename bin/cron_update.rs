@@ -1,6 +1,5 @@
 /// This script is meant to be ran periodically, ideally once every day with an arXiv update
 ///
-use std::result::Result;
 use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
@@ -12,7 +11,9 @@ use ar5iv_util::oai::fetch_article_list_since;
 
 pub fn main() -> Result<(), Box<dyn Error>> {
   // Step 0. Now the current date
+  // arXiv sits in the TZ="America/New_York" Eastern timezone
   let today_exec = Command::new("date")
+    .env("TZ", "America/New_York")
     .arg("-I")
     .output()
     .expect("made to run on a Unix box with 'date -I' available.");

@@ -66,7 +66,7 @@ pub fn filter_list_to_check(
     let mut set = HashSet::new();
     for line in reader
       .lines()
-      .flatten()
+      .map_while(Result::ok)
       .map(|l| l.split(',').next().unwrap().to_owned())
     {
       set.insert(line);

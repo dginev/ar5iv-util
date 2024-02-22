@@ -1,5 +1,4 @@
 use std::error::Error;
-use std::result::Result;
 use std::thread;
 use std::time::Duration;
 use libxml::parser::Parser;
@@ -14,14 +13,14 @@ pub fn fetch_article_list_since(yyyymmdd: &str) -> Result<Vec<String>, Box<dyn E
   fetch_article_list_by_url(oai_arxiv_url)
 }
 
-pub fn fetch_article_list_by_url(url: String) -> Result<Vec<String>, Box<dyn Error>> {
+pub fn fetch_article_list_by_url(url_owned: String) -> Result<Vec<String>, Box<dyn Error>> {
   let client = reqwest::blocking::Client::builder()
     .user_agent("ar5iv (https://ar5iv.labs.arxiv.org)")
     .build()?;
   let mut ids = Vec::new();
-
+  let url = url_owned.as_str();
   for _retries in 0..3 {
-    if let Ok(resp) = client.get(&url).send() {
+    if let Ok(resp) = client.get(url).send() {
       let status = resp.status();
       if status != 200 {
         if status == 503 {
