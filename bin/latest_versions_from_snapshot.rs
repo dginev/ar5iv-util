@@ -26,17 +26,17 @@ fn main() -> Result<(), Box<dyn Error>> {
   for value_result in stream {
     let value = value_result?;
     let versions = value.get("versions").unwrap().as_array().unwrap();
+    if versions.len() < 2 {
+      continue; // skip single version cases, we already have them.
+    }
     for val in versions {
       let created : DateTime<FixedOffset> = DateTime::parse_from_rfc2822(
       val.get("created").unwrap().as_str().unwrap())?;
       if *LAST_UPDATE < created {
-        // let v = val.get("version").unwrap().as_str().unwrap();
-        // if v != "v1" { // we have v1 from the S3 bucket downloads
-          total_gathered += 1;
-          let value_str = value.get("id").unwrap().as_str().unwrap();
-          writeln!(gather_file, "{value_str}")?;
-          break;
-        // }
+        total_gathered += 1;
+        let value_str = value.get("id").unwrap().as_str().unwrap();
+        writeln!(gather_file, "{value_str}")?;
+        break;
       }
     }
   }
