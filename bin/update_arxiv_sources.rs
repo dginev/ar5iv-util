@@ -71,8 +71,8 @@ fn main() -> Result<(), Box<dyn Error>> {
       'retries: for _retry in &retry_indexes {
         if let Ok(payload) = client.get(url).send() {
           match payload.status().as_u16() {
-            200 => {
-              if let Ok(bytes) = payload.bytes() {
+            200 => match payload.bytes() {
+              Ok(bytes) => {
                 // only execute if we get some bytes
                 if !bytes.is_empty() {
                   let (to_dir,base_name) = if let Some(cap) = slash_regex.captures(id) {
@@ -87,9 +87,14 @@ fn main() -> Result<(), Box<dyn Error>> {
                     id.to_owned())
                   };
                   repackage_arxiv_download(&mut bytes.to_vec(), to_dir, base_name);
+                  break 'retries;
+                } else {
+                  eprintln!("Code 200 but no bytes returned; article id {id}.");
                 }
+              },
+              Err(e) => {
+                eprintln!("Code 200 but bytes returned had error {e:?}; article id {id}.");
               }
-              break 'retries;
             },
             403 => {eprintln!("code 403 for article id {id}, skip."); break 'retries;},
             other => eprintln!("code {other} for article id {id}."),
