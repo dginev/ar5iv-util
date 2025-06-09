@@ -9,7 +9,7 @@ use once_cell::sync::Lazy;
 
 // When was the last date a full update was ran?
 pub static LAST_UPDATE : Lazy<DateTime<FixedOffset>> = Lazy::new(||
-  FixedOffset::east_opt(0).unwrap().with_ymd_and_hms(2023, 7, 31, 0, 0, 0).unwrap()
+  FixedOffset::east_opt(0).unwrap().with_ymd_and_hms(2025, 6, 6, 0, 0, 0).unwrap()
 );
 
 fn main() -> Result<(), Box<dyn Error>> {
